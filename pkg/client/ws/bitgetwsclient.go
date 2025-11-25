@@ -77,15 +77,11 @@ func (p *BitgetWsClient) SubscribeDef(list []model.SubscribeReq) {
 
 func toUpperReq(req model.SubscribeReq) model.SubscribeReq {
 	req.InstType = strings.ToUpper(req.InstType)
-	if req.InstId != nil {
-		instId := strings.ToLower(*req.InstId)
-		req.InstId = &instId
-	}
-	if req.Coin != nil {
-		coin := strings.ToLower(*req.Coin)
-		req.Coin = &coin
-	}
+	req.InstId = strings.ToLower(req.InstId)
 	req.Channel = strings.ToLower(req.Channel)
+	if req.Coin == "" {
+		req.Coin = strings.ToLower(req.InstId)
+	}
 	return req
 
 }
