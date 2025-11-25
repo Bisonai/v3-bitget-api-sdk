@@ -7,7 +7,6 @@ import (
 
 	"github.com/bisonai/v3-bitget-api-sdk/pkg/config"
 	"github.com/bisonai/v3-bitget-api-sdk/pkg/constants"
-	"github.com/bisonai/v3-bitget-api-sdk/pkg/logging/applogger"
 	"github.com/bisonai/v3-bitget-api-sdk/pkg/model"
 	"github.com/bisonai/v3-bitget-api-sdk/pkg/utils"
 	"github.com/gorilla/websocket"
@@ -79,13 +78,10 @@ func (p *BitgetBaseWsClient) Connect() {
 
 func (p *BitgetBaseWsClient) ConnectWebSocket() {
 	var err error
-	applogger.Info("WebSocket connecting...")
 	p.WebSocketClient, _, err = websocket.DefaultDialer.Dial(config.WsUrl, nil)
 	if err != nil {
-		fmt.Printf("WebSocket connected error: %s\n", err)
 		return
 	}
-	applogger.Info("WebSocket connected")
 	p.Connection = true
 }
 
@@ -132,27 +128,22 @@ func (p *BitgetBaseWsClient) SendByType(req model.WsBaseReq) {
 
 func (p *BitgetBaseWsClient) Send(data string) {
 	if p.WebSocketClient == nil {
-		applogger.Error("WebSocket sent error: no connection available")
 		return
 	}
-	applogger.Info("sendMessage:%s", data)
 	p.SendMutex.Lock()
 	err := p.WebSocketClient.WriteMessage(websocket.TextMessage, []byte(data))
 	p.SendMutex.Unlock()
 	if err != nil {
-		applogger.Error("WebSocket sent error: data=%s, error=%s", data, err)
 	}
 }
 
 func (p *BitgetBaseWsClient) tickerLoop() {
-	applogger.Info("tickerLoop started")
 	for {
 		select {
 		case <-p.Ticker.C:
 			elapsedSecond := time.Now().Sub(p.LastReceivedTime).Seconds()
 
 			if elapsedSecond > constants.ReconnectWaitSecond {
-				applogger.Info("WebSocket reconnect...")
 				p.disconnectWebSocket()
 				p.ConnectWebSocket()
 			}
@@ -164,38 +155,28 @@ func (p *BitgetBaseWsClient) disconnectWebSocket() {
 	if p.WebSocketClient == nil {
 		return
 	}
-
-	fmt.Println("WebSocket disconnecting...")
 	err := p.WebSocketClient.Close()
 	if err != nil {
-		applogger.Error("WebSocket disconnect error: %s\n", err)
 		return
 	}
-
-	applogger.Info("WebSocket disconnected")
 }
 
 func (p *BitgetBaseWsClient) ReadLoop() {
 	for {
 
 		if p.WebSocketClient == nil {
-			applogger.Info("Read error: no connection available")
 			//time.Sleep(TimerIntervalSecond * time.Second)
 			continue
 		}
 
 		_, buf, err := p.WebSocketClient.ReadMessage()
 		if err != nil {
-			applogger.Info("Read error: %s", err)
 			continue
 		}
 		p.LastReceivedTime = time.Now()
 		message := string(buf)
 
-		applogger.Info("rev:" + message)
-
 		if message == "pong" {
-			applogger.Info("Keep connected:" + message)
 			continue
 		}
 		jsonMap := utils.JSONToMap(message)
@@ -209,7 +190,6 @@ func (p *BitgetBaseWsClient) ReadLoop() {
 
 		v, e = jsonMap["event"]
 		if e && v == "login" {
-			applogger.Info("login msg:" + message)
 			p.LoginStatus = true
 			continue
 		}

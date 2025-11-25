@@ -5,7 +5,6 @@ import (
 
 	"github.com/bisonai/v3-bitget-api-sdk/pkg/common"
 	"github.com/bisonai/v3-bitget-api-sdk/pkg/constants"
-	"github.com/bisonai/v3-bitget-api-sdk/pkg/logging/applogger"
 	"github.com/bisonai/v3-bitget-api-sdk/pkg/model"
 )
 
@@ -22,7 +21,6 @@ func (p *BitgetWsClient) Init(needLogin bool, listener common.OnReceive, errorLi
 	p.bitgetBaseWsClient.ExecuterPing()
 
 	if needLogin {
-		applogger.Info("login in ...")
 		p.bitgetBaseWsClient.Login()
 		for {
 			if !p.bitgetBaseWsClient.LoginStatus {
@@ -30,7 +28,6 @@ func (p *BitgetWsClient) Init(needLogin bool, listener common.OnReceive, errorLi
 			}
 			break
 		}
-		applogger.Info("login in ... success")
 	}
 
 	return p
