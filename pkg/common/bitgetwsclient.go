@@ -232,17 +232,7 @@ func (p *BitgetBaseWsClient) GetListener(argJson interface{}) OnReceive {
 	subscribeReq := model.SubscribeReq{
 		InstType: fmt.Sprintf("%v", mapData["instType"]),
 		Channel:  fmt.Sprintf("%v", mapData["channel"]),
-	}
-
-	c, ok := mapData["coin"]
-	if ok {
-		raw := fmt.Sprintf("%v", c)
-		subscribeReq.Coin = &raw
-	}
-	i, ok := mapData["instId"]
-	if ok {
-		raw := fmt.Sprintf("%v", i)
-		subscribeReq.InstId = &raw
+		InstId:   fmt.Sprintf("%v", mapData["instId"]),
 	}
 
 	v, e := p.ScribeMap[subscribeReq]
