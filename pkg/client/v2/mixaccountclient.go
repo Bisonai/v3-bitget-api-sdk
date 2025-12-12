@@ -75,3 +75,8 @@ func (p *MixAccountClient) HistoryPosition(params map[string]string) ([]byte, er
 	resp, err := p.BitgetRestClient.DoGet("/api/v2/mix/position/history-position", params)
 	return resp, err
 }
+
+func (p *MixAccountClient) AccountBills(params map[string]string) ([]byte, error) {
+	resp, err := p.BitgetRestClient.DoGet("/api/v2/mix/account/bill", params)
+	return resp, err
+}
