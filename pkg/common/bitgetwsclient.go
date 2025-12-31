@@ -2,6 +2,8 @@ package common
 
 import (
 	"fmt"
+	"net/http"
+	"net/url"
 	"sync"
 	"time"
 
@@ -15,19 +17,19 @@ import (
 )
 
 type BitgetBaseWsClient struct {
-	NeedLogin                     bool
-	Connection                    bool
-	LoginStatus                   bool
-	Listener                      OnReceive
-	ErrorListener                 OnReceive
-	Ticker                        *time.Ticker
-	SendMutex                     *sync.Mutex
-	WebSocketClient               *websocket.Conn
-	LastReceivedTime              time.Time
-	AllSuribe                     *model.Set
-	Signer                        *Signer
-	ScribeMap                     map[model.SubscribeReq]OnReceive
-	ApiKey, Passphrase, SecretKey string
+	NeedLogin                               bool
+	Connection                              bool
+	LoginStatus                             bool
+	Listener                                OnReceive
+	ErrorListener                           OnReceive
+	Ticker                                  *time.Ticker
+	SendMutex                               *sync.Mutex
+	WebSocketClient                         *websocket.Conn
+	LastReceivedTime                        time.Time
+	AllSuribe                               *model.Set
+	Signer                                  *Signer
+	ScribeMap                               map[model.SubscribeReq]OnReceive
+	ApiKey, Passphrase, SecretKey, ProxyUrl string
 }
 
 type WsClientOption func(*BitgetBaseWsClient)
@@ -47,6 +49,12 @@ func WithWsPassphrase(passphrase string) WsClientOption {
 func WithWsSecretKey(secretKey string) WsClientOption {
 	return func(c *BitgetBaseWsClient) {
 		c.SecretKey = secretKey
+	}
+}
+
+func WithWsProxyUrl(proxyUrl string) WsClientOption {
+	return func(c *BitgetBaseWsClient) {
+		c.ProxyUrl = proxyUrl
 	}
 }
 
@@ -80,7 +88,15 @@ func (p *BitgetBaseWsClient) Connect() {
 func (p *BitgetBaseWsClient) ConnectWebSocket() {
 	var err error
 	applogger.Info("WebSocket connecting...")
-	p.WebSocketClient, _, err = websocket.DefaultDialer.Dial(config.WsUrl, nil)
+	dialer := websocket.DefaultDialer
+	if p.ProxyUrl != "" {
+		proxyUrl, err := url.Parse(p.ProxyUrl)
+		if err != nil {
+			panic(err)
+		}
+		dialer.Proxy = http.ProxyURL(proxyUrl)
+	}
+	p.WebSocketClient, _, err = dialer.Dial(config.WsUrl, nil)
 	if err != nil {
 		fmt.Printf("WebSocket connected error: %s\n", err)
 		return

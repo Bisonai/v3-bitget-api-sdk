@@ -3,6 +3,7 @@ package common
 import (
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -16,6 +17,7 @@ type BitgetRestClient struct {
 	ApiSecretKey string
 	Passphrase   string
 	BaseUrl      string
+	ProxyUrl     string
 	HttpClient   http.Client
 	Signer       *Signer
 }
@@ -46,6 +48,12 @@ func WithBaseUrl(baseUrl string) ClientOption {
 	}
 }
 
+func WithProxyUrl(proxyUrl string) ClientOption {
+	return func(c *BitgetRestClient) {
+		c.ProxyUrl = proxyUrl
+	}
+}
+
 func (p *BitgetRestClient) Init(opts ...ClientOption) *BitgetRestClient {
 	for _, opt := range opts {
 		opt(p)
@@ -54,6 +62,17 @@ func (p *BitgetRestClient) Init(opts ...ClientOption) *BitgetRestClient {
 	p.Signer = new(Signer).Init(p.ApiSecretKey)
 	p.HttpClient = http.Client{
 		Timeout: time.Duration(config.TimeoutSecond) * time.Second,
+	}
+
+	if p.ProxyUrl != "" {
+		proxyUrl, err := url.Parse(p.ProxyUrl)
+		if err != nil {
+			panic(err)
+		}
+		transport := &http.Transport{
+			Proxy: http.ProxyURL(proxyUrl),
+		}
+		p.HttpClient.Transport = transport
 	}
 
 	return p
